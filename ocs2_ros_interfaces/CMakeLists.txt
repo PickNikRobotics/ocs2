@@ -44,6 +44,7 @@ add_library(${PROJECT_NAME}
   src/command/TargetTrajectoriesRosPublisher.cpp
   src/command/TargetTrajectoriesInteractiveMarker.cpp
   src/command/TargetTrajectoriesKeyboardPublisher.cpp
+  src/command/TargetTrajectoriesJoystickPublisher.cpp
   src/common/RosMsgConversions.cpp
   src/common/RosMsgHelpers.cpp
   src/mpc/MPC_ROS_Interface.cpp

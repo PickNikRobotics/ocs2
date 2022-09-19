@@ -27,81 +27,87 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_ros_interfaces/command/TargetTrajectoriesKeyboardPublisher.h"
+#include "ocs2_ros_interfaces/command/TargetTrajectoriesJoystickPublisher.h"
 
 #include <ocs2_core/misc/CommandLine.h>
 #include <ocs2_core/misc/Display.h>
 #include <ocs2_msgs/msg/mpc_observation.hpp>
 #include <ocs2_ros_interfaces/common/RosMsgConversions.h>
+#include <condition_variable>
+#include <thread>
+#include <chrono>
+using namespace std::chrono_literals;
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TargetTrajectoriesKeyboardPublisher::TargetTrajectoriesKeyboardPublisher(::rclcpp::Node::SharedPtr& nodeHandle, const std::string& topicPrefix,
+TargetTrajectoriesJoystickPublisher::TargetTrajectoriesJoystickPublisher(::rclcpp::Node::SharedPtr& nodeHandle, const std::string& topicPrefix,
                                                                          const scalar_array_t& targetCommandLimits,
                                                                          CommandLineToTargetTrajectories commandLineToTargetTrajectoriesFun)
     : targetCommandLimits_(Eigen::Map<const vector_t>(targetCommandLimits.data(), targetCommandLimits.size())),
       commandLineToTargetTrajectoriesFun_(std::move(commandLineToTargetTrajectoriesFun)),
       node_(nodeHandle)  {
+  observationReceived_ = false;
   // observation subscriber
   auto observationCallback = [this](const ocs2_msgs::msg::MPCObservation::SharedPtr msg) {
     std::lock_guard<std::mutex> lock(latestObservationMutex_);
     latestObservation_ = ros_msg_conversions::readObservationMsg(*msg);
+    observationReceived_ = true;
   };
   observationSubscriber_ = nodeHandle->create_subscription<ocs2_msgs::msg::MPCObservation>(topicPrefix + "_mpc_observation", 1, observationCallback);
 
   // Trajectories publisher
   targetTrajectoriesPublisherPtr_.reset(new TargetTrajectoriesRosPublisher(nodeHandle, topicPrefix));
+
+  command_ << 0,0,0,0;
+  //subsribe to joystick
+  joysubscription_ = node_->create_subscription<sensor_msgs::msg::Joy>(
+    "joy", 10, std::bind(&TargetTrajectoriesJoystickPublisher::joyCallback, this, std::placeholders::_1));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void TargetTrajectoriesKeyboardPublisher::publishKeyboardCommand(const std::string& commadMsg) {
+void TargetTrajectoriesJoystickPublisher::publishJoystickCommand(const std::string& commadMsg) {
   while (rclcpp::ok()) {
-    // get command line
-    std::cout << commadMsg << ": ";
-    const vector_t commandLineInput = getCommandLine().cwiseMin(targetCommandLimits_).cwiseMax(-targetCommandLimits_);
-
-    // display
-    std::cout << "The following command is published: [" << toDelimitedString(commandLineInput) << "]\n\n";
-
+    const vector_t commandLineInput = getLatestJoyCommand().cwiseMin(targetCommandLimits_).cwiseMax(-targetCommandLimits_);
+    std::cout << "command is: " << commandLineInput.transpose() << std::endl;
+    
     // get the latest observation
     ::rclcpp::spin_some(node_);
-    SystemObservation observation;
-    {
-      std::lock_guard<std::mutex> lock(latestObservationMutex_);
-      observation = latestObservation_;
+
+    if (observationReceived_) {
+      SystemObservation observation;
+      {
+        std::lock_guard<std::mutex> lock(latestObservationMutex_);
+        observation = latestObservation_;
+      }
+
+      // get TargetTrajectories
+      const auto targetTrajectories = commandLineToTargetTrajectoriesFun_(commandLineInput, observation);
+
+      // publish TargetTrajectories
+      targetTrajectoriesPublisherPtr_->publishTargetTrajectories(targetTrajectories);
     }
-
-    // get TargetTrajectories
-    const auto targetTrajectories = commandLineToTargetTrajectoriesFun_(commandLineInput, observation);
-
-    // publish TargetTrajectories
-    targetTrajectoriesPublisherPtr_->publishTargetTrajectories(targetTrajectories);
   }  // end of while loop
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-vector_t TargetTrajectoriesKeyboardPublisher::getCommandLine() {
-  // get command line as one long string
-  auto shouldTerminate = []() { return !rclcpp::ok(); };
-  const std::string line = getCommandLineString(shouldTerminate);
+void TargetTrajectoriesJoystickPublisher::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg) 
+{
+  const std::lock_guard<std::mutex> lock(joymutex_);
+  command_(0) = msg->axes[1];
+  command_(1) = msg->axes[0];
+  command_(2) = 0.0;
+  command_(3) = msg->axes[3]*90;
+  
+  std::cout << "filled in data" << std::endl;
+}
 
-  // a line to words
-  const std::vector<std::string> words = stringToWords(line);
-
-  const size_t targetCommandSize = targetCommandLimits_.size();
-  vector_t targetCommand = vector_t::Zero(targetCommandSize);
-  for (size_t i = 0; i < std::min(words.size(), targetCommandSize); i++) {
-    targetCommand(i) = static_cast<scalar_t>(stof(words[i]));
-  }
-
-  return targetCommand;
+Eigen::Vector4d TargetTrajectoriesJoystickPublisher::getLatestJoyCommand(){
+  const std::lock_guard<std::mutex> lock(joymutex_);
+  return command_;
 }
 
 }  // namespace ocs2

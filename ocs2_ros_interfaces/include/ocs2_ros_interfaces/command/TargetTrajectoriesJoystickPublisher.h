@@ -32,6 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <iostream>
+#include <sensor_msgs/msg/joy.hpp>
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -43,7 +45,7 @@ namespace ocs2 {
 /**
  * This class lets the user to insert robot command form command line.
  */
-class TargetTrajectoriesKeyboardPublisher final {
+class TargetTrajectoriesJoystickPublisher final {
  public:
   using CommandLineToTargetTrajectories =
       std::function<TargetTrajectories(const vector_t& commadLineTarget, const SystemObservation& observation)>;
@@ -57,33 +59,31 @@ class TargetTrajectoriesKeyboardPublisher final {
    * @param [in] targetCommandLimits: The limits of the loaded command from command-line (for safety purposes).
    * @param [in] commandLineToTargetTrajectoriesFun: A function which transforms the command line input to TargetTrajectories.
    */
-  TargetTrajectoriesKeyboardPublisher(::rclcpp::Node::SharedPtr& nodeHandle, const std::string& topicPrefix,
+  TargetTrajectoriesJoystickPublisher(::rclcpp::Node::SharedPtr& nodeHandle, const std::string& topicPrefix,
                                       const scalar_array_t& targetCommandLimits,
                                       CommandLineToTargetTrajectories commandLineToTargetTrajectoriesFun);
 
   /** Gets the command vector size. */
   size_t targetCommandSize() const { return targetCommandLimits_.size(); }
 
-  /**
-   * Publishes command line input. If the input command is shorter than the expected command
-   * size (targetCommandSize), the method will set the rest of the command to zero.
-   *
-   * @param [in] commadMsg: Message to be displayed on screen.
-   */
-  void publishKeyboardCommand(const std::string& commadMsg = "Enter command, separated by space");
+  void publishJoystickCommand(const std::string& commadMsg = "Enter command, separated by space");
 
  private:
-  /** Gets the target from command line. */
-  vector_t getCommandLine();
-
   const vector_t targetCommandLimits_;
   CommandLineToTargetTrajectories commandLineToTargetTrajectoriesFun_;
 
   std::unique_ptr<TargetTrajectoriesRosPublisher> targetTrajectoriesPublisherPtr_;
 
+  rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joysubscription_;
+  Eigen::Vector4d command_;
+  std::mutex joymutex_;
+  void joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg);
+  Eigen::Vector4d getLatestJoyCommand();
+
   ::rclcpp::Subscription<ocs2_msgs::msg::MPCObservation>::SharedPtr observationSubscriber_;
   mutable std::mutex latestObservationMutex_;
   SystemObservation latestObservation_;
+  bool observationReceived_;
   ::rclcpp::Node::SharedPtr node_;
 };
 
