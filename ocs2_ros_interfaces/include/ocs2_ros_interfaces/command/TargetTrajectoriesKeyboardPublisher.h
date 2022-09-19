@@ -84,6 +84,7 @@ class TargetTrajectoriesKeyboardPublisher final {
   ::rclcpp::Subscription<ocs2_msgs::msg::MPCObservation>::SharedPtr observationSubscriber_;
   mutable std::mutex latestObservationMutex_;
   SystemObservation latestObservation_;
+  bool observationReceived_;
   ::rclcpp::Node::SharedPtr node_;
 };
 

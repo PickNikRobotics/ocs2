@@ -49,6 +49,7 @@ TargetTrajectoriesKeyboardPublisher::TargetTrajectoriesKeyboardPublisher(::rclcp
   auto observationCallback = [this](const ocs2_msgs::msg::MPCObservation::SharedPtr msg) {
     std::lock_guard<std::mutex> lock(latestObservationMutex_);
     latestObservation_ = ros_msg_conversions::readObservationMsg(*msg);
+    observationReceived_ = true;
   };
   observationSubscriber_ = nodeHandle->create_subscription<ocs2_msgs::msg::MPCObservation>(topicPrefix + "_mpc_observation", 1, observationCallback);
 
@@ -63,24 +64,28 @@ void TargetTrajectoriesKeyboardPublisher::publishKeyboardCommand(const std::stri
   while (rclcpp::ok()) {
     // get command line
     std::cout << commadMsg << ": ";
-    const vector_t commandLineInput = getCommandLine().cwiseMin(targetCommandLimits_).cwiseMax(-targetCommandLimits_);
-
-    // display
-    std::cout << "The following command is published: [" << toDelimitedString(commandLineInput) << "]\n\n";
+    const size_t targetCommandSize = targetCommandLimits_.size();
+    const vector_t commandLineInput = vector_t::Zero(targetCommandSize).cwiseMin(targetCommandLimits_).cwiseMax(-targetCommandLimits_);
 
     // get the latest observation
     ::rclcpp::spin_some(node_);
-    SystemObservation observation;
-    {
-      std::lock_guard<std::mutex> lock(latestObservationMutex_);
-      observation = latestObservation_;
+
+    if (observationReceived_) {
+      SystemObservation observation;
+      {
+        std::lock_guard<std::mutex> lock(latestObservationMutex_);
+        observation = latestObservation_;
+      }
+
+      // get TargetTrajectories
+      const auto targetTrajectories = commandLineToTargetTrajectoriesFun_(commandLineInput, observation);
+
+      // publish TargetTrajectories
+      targetTrajectoriesPublisherPtr_->publishTargetTrajectories(targetTrajectories);
+
+      // display
+      std::cout << "The following command is published: [" << toDelimitedString(commandLineInput) << "]\n\n";
     }
-
-    // get TargetTrajectories
-    const auto targetTrajectories = commandLineToTargetTrajectoriesFun_(commandLineInput, observation);
-
-    // publish TargetTrajectories
-    targetTrajectoriesPublisherPtr_->publishTargetTrajectories(targetTrajectories);
   }  // end of while loop
 }
 
