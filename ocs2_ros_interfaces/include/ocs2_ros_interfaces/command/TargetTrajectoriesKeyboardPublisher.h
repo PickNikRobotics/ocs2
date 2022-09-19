@@ -32,6 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <iostream>
+#include <sensor_msgs/msg/joy.hpp>
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -71,6 +73,7 @@ class TargetTrajectoriesKeyboardPublisher final {
    * @param [in] commadMsg: Message to be displayed on screen.
    */
   void publishKeyboardCommand(const std::string& commadMsg = "Enter command, separated by space");
+  void publishJoystickCommand(const std::string& commadMsg = "Enter command, separated by space");
 
  private:
   /** Gets the target from command line. */
@@ -80,6 +83,12 @@ class TargetTrajectoriesKeyboardPublisher final {
   CommandLineToTargetTrajectories commandLineToTargetTrajectoriesFun_;
 
   std::unique_ptr<TargetTrajectoriesRosPublisher> targetTrajectoriesPublisherPtr_;
+
+  rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joysubscription_;
+  Eigen::Vector4d command_;
+  std::mutex joymutex_;
+  void joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg);
+  Eigen::Vector4d getLatestJoyCommand();
 
   ::rclcpp::Subscription<ocs2_msgs::msg::MPCObservation>::SharedPtr observationSubscriber_;
   mutable std::mutex latestObservationMutex_;

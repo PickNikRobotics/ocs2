@@ -32,6 +32,7 @@
   <build_depend>ocs2_msgs</build_depend>
   <build_depend>ocs2_legged_robot</build_depend>
   <build_depend>ocs2_ros_interfaces</build_depend>
+  <build_depend>sensor_msgs</build_depend>
 
   <build_depend>pinocchio</build_depend>
 

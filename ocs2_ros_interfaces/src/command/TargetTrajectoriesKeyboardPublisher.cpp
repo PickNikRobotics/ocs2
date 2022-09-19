@@ -33,6 +33,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/Display.h>
 #include <ocs2_msgs/msg/mpc_observation.hpp>
 #include <ocs2_ros_interfaces/common/RosMsgConversions.h>
+#include <condition_variable>
+#include <thread>
+#include <chrono>
+using namespace std::chrono_literals;
 
 namespace ocs2 {
 
@@ -54,6 +58,11 @@ TargetTrajectoriesKeyboardPublisher::TargetTrajectoriesKeyboardPublisher(::rclcp
 
   // Trajectories publisher
   targetTrajectoriesPublisherPtr_.reset(new TargetTrajectoriesRosPublisher(nodeHandle, topicPrefix));
+
+  command_ << 0,0,0,0;
+  //subsribe to joystick
+  joysubscription_ = node_->create_subscription<sensor_msgs::msg::Joy>(
+    "joy", 10, std::bind(&TargetTrajectoriesKeyboardPublisher::joyCallback, this, std::placeholders::_1));
 }
 
 /******************************************************************************************************/
@@ -84,6 +93,48 @@ void TargetTrajectoriesKeyboardPublisher::publishKeyboardCommand(const std::stri
   }  // end of while loop
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void TargetTrajectoriesKeyboardPublisher::publishJoystickCommand(const std::string& commadMsg) {
+  while (rclcpp::ok()) {
+    std::cout << commadMsg << ": ";
+    std::this_thread::sleep_for(5s);
+    // getCommandLine();
+    // vector_t commandLineInput = getCommandLine().cwiseMin(targetCommandLimits_).cwiseMax(-targetCommandLimits_);
+    const vector_t commandLineInput = getLatestJoyCommand().cwiseMin(targetCommandLimits_).cwiseMax(-targetCommandLimits_);
+    std::cout << "command is: " << commandLineInput.transpose() << std::endl;
+    // get the latest observation
+    ::rclcpp::spin_some(node_);
+    SystemObservation observation;
+    {
+      std::lock_guard<std::mutex> lock(latestObservationMutex_);
+      observation = latestObservation_;
+    }
+
+    // get TargetTrajectories
+    const auto targetTrajectories = commandLineToTargetTrajectoriesFun_(commandLineInput, observation);
+
+    // publish TargetTrajectories
+    targetTrajectoriesPublisherPtr_->publishTargetTrajectories(targetTrajectories);
+  }  // end of while loop
+}
+
+void TargetTrajectoriesKeyboardPublisher::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg) 
+{
+  const std::lock_guard<std::mutex> lock(joymutex_);
+  command_(0) = msg->axes[1];
+  command_(1) = msg->axes[0];
+  command_(2) = 0.0;
+  command_(3) = msg->axes[3];
+  // new_data_.set_value(command);
+  std::cout << "filled in data" << std::endl;
+}
+
+Eigen::Vector4d TargetTrajectoriesKeyboardPublisher::getLatestJoyCommand(){
+  const std::lock_guard<std::mutex> lock(joymutex_);
+  return command_;
+}
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/

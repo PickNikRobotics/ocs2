@@ -126,7 +126,7 @@ int main(int argc, char* argv[]) {
   TargetTrajectoriesKeyboardPublisher targetPoseCommand(nodeHandle, robotName, relativeBaseLimit, &commandLineToTargetTrajectories);
 
   const std::string commandMsg = "Enter XYZ and Yaw (deg) displacements for the TORSO, separated by spaces";
-  targetPoseCommand.publishKeyboardCommand(commandMsg);
+  targetPoseCommand.publishJoystickCommand(commandMsg);
 
   // Successful exit
   return 0;
