@@ -72,8 +72,8 @@ TargetTrajectoriesJoystickPublisher::TargetTrajectoriesJoystickPublisher(::rclcp
 /******************************************************************************************************/
 void TargetTrajectoriesJoystickPublisher::publishJoystickCommand(const std::string& commadMsg) {
   while (rclcpp::ok()) {
-    const vector_t commandLineInput = getLatestJoyCommand().cwiseMin(targetCommandLimits_).cwiseMax(-targetCommandLimits_);
-    std::cout << "command is: " << commandLineInput.transpose() << std::endl;
+    Eigen::Vector4d joy_command = getLatestJoyCommand().cwiseMin(targetCommandLimits_).cwiseMax(-targetCommandLimits_);
+    std::cout << "command is: " << joy_command.transpose() << std::endl;
     
     // get the latest observation
     ::rclcpp::spin_some(node_);
@@ -85,6 +85,14 @@ void TargetTrajectoriesJoystickPublisher::publishJoystickCommand(const std::stri
         observation = latestObservation_;
       }
 
+      // Rotate joystick command to world frame since that's what ocs2 expects
+      Eigen::Quaterniond curr_rot = Eigen::AngleAxisd(observation.state[9],Eigen::Vector3d::UnitZ())
+                                * Eigen::AngleAxisd(observation.state[10],Eigen::Vector3d::UnitY())
+                                * Eigen::AngleAxisd(observation.state[11],Eigen::Vector3d::UnitX());
+      std::cout << "state size: " << observation.state.size() << std::endl;
+      joy_command.segment<3>(0) = curr_rot.matrix()*joy_command.segment<3>(0);
+      const vector_t commandLineInput(joy_command);
+      
       // get TargetTrajectories
       const auto targetTrajectories = commandLineToTargetTrajectoriesFun_(commandLineInput, observation);
 
