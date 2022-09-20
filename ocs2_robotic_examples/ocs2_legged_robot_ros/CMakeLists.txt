@@ -3,11 +3,9 @@ project(ocs2_legged_robot_ros)
 
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
 endif()
-
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -41,8 +39,8 @@ find_package(ocs2_robotic_assets REQUIRED)
 find_package(ocs2_legged_robot REQUIRED)
 find_package(sensor_msgs REQUIRED)
 
-set(AMENT_PACKAGE_DEPENDENCIES
 
+set(AMENT_PACKAGE_DEPENDENCIES
   # roslib
   # cmake_modules
   tf2
@@ -74,9 +72,9 @@ find_package(Boost REQUIRED COMPONENTS
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
-if(EXISTS "/opt/openrobots/lib/libpinocchio.so")
+if ( EXISTS "/opt/openrobots/lib/libpinocchio.so")
 else()
-  message(FATAL_ERROR "Install Pinocchio first. Instructions: https://stack-of-tasks.github.io/pinocchio/download.html")
+    message(FATAL_ERROR "Install Pinocchio first. Instructions: https://stack-of-tasks.github.io/pinocchio/download.html")
 endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors")
@@ -84,9 +82,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-err
 list(APPEND CMAKE_PREFIX_PATH "/opt/openrobots/")
 find_package(pinocchio REQUIRED)
 
-# ##########
-# # Build ##
-# ##########
+###########
+## Build ##
+###########
+
 include_directories(
   include
   ${pinocchio_INCLUDE_DIRS}
@@ -113,11 +112,13 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   $<INSTALL_INTERFACE:include>
 )
 
+
 # TODO: NOT NEEDED?
 # add_dependencies(${PROJECT_NAME}
-# ${${PROJECT_NAME}_EXPORTED_TARGETS}
-# ${catkin_EXPORTED_TARGETS}
+#   ${${PROJECT_NAME}_EXPORTED_TARGETS}
+#   ${catkin_EXPORTED_TARGETS}
 # )
+
 target_link_libraries(${PROJECT_NAME}
   ${Boost_LIBRARIES}
 )
@@ -152,7 +153,7 @@ target_link_libraries(legged_robot_ddp_mpc
 )
 target_compile_options(legged_robot_ddp_mpc PRIVATE ${OCS2_CXX_FLAGS})
 
-# # SQP-MPC node for legged robot
+## SQP-MPC node for legged robot
 add_executable(legged_robot_sqp_mpc
   src/LeggedRobotSqpMpcNode.cpp
 )
@@ -244,31 +245,29 @@ target_link_libraries(legged_robot_gait_command
 )
 target_compile_options(legged_robot_gait_command PRIVATE ${OCS2_CXX_FLAGS})
 
-# ########################
-# ##   CLANG TOOLING   ###
-# ########################
+#########################
+###   CLANG TOOLING   ###
+#########################
 find_package(cmake_clang_tools QUIET)
-
 if(cmake_clang_tools_FOUND)
-  message(STATUS "Run clang tooling for target ocs2_legged_robot_ros")
-  add_clang_tooling(
-    TARGETS
-    ${PROJECT_NAME}
-    legged_robot_ddp_mpc
-
-    # legged_robot_sqp_mpc
-    # legged_robot_dummy
-    # legged_robot_target
-    # legged_robot_gait_command
-    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
-    CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
-    CF_WERROR
-  )
+   message(STATUS "Run clang tooling for target ocs2_legged_robot_ros")
+   add_clang_tooling(
+     TARGETS
+       ${PROJECT_NAME}
+       legged_robot_ddp_mpc
+      #  legged_robot_sqp_mpc
+      #  legged_robot_dummy
+      #  legged_robot_target
+      #  legged_robot_gait_command
+     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
+     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+     CF_WERROR
+)
 endif(cmake_clang_tools_FOUND)
 
-# ############
-# # Install ##
-# ############
+#############
+## Install ##
+#############
 install(DIRECTORY include/
   DESTINATION include
 )
@@ -281,11 +280,11 @@ install(TARGETS ${PROJECT_NAME}
 
 install(
   TARGETS
-  legged_robot_ddp_mpc
-  legged_robot_sqp_mpc
-  legged_robot_dummy
-  legged_robot_target
-  legged_robot_gait_command
+    legged_robot_ddp_mpc
+    legged_robot_sqp_mpc
+    legged_robot_dummy
+    legged_robot_target
+    legged_robot_gait_command
   RUNTIME DESTINATION lib/${PROJECT_NAME}
   INCLUDES DESTINATION include
 )
@@ -314,7 +313,6 @@ ament_export_dependencies(visualization_msgs)
 ament_export_dependencies(nav_msgs)
 ament_export_dependencies(std_srvs)
 ament_package()
-
-# ############
-# # Testing ##
-# ############
+#############
+## Testing ##
+#############

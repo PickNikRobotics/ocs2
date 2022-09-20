@@ -73,7 +73,6 @@ TargetTrajectoriesJoystickPublisher::TargetTrajectoriesJoystickPublisher(::rclcp
 void TargetTrajectoriesJoystickPublisher::publishJoystickCommand(const std::string& commadMsg) {
   while (rclcpp::ok()) {
     Eigen::Vector4d joy_command = getLatestJoyCommand().cwiseMin(targetCommandLimits_).cwiseMax(-targetCommandLimits_);
-    std::cout << "command is: " << joy_command.transpose() << std::endl;
     
     // get the latest observation
     ::rclcpp::spin_some(node_);
@@ -89,7 +88,6 @@ void TargetTrajectoriesJoystickPublisher::publishJoystickCommand(const std::stri
       Eigen::Quaterniond curr_rot = Eigen::AngleAxisd(observation.state[9],Eigen::Vector3d::UnitZ())
                                 * Eigen::AngleAxisd(observation.state[10],Eigen::Vector3d::UnitY())
                                 * Eigen::AngleAxisd(observation.state[11],Eigen::Vector3d::UnitX());
-      std::cout << "state size: " << observation.state.size() << std::endl;
       joy_command.segment<3>(0) = curr_rot.matrix()*joy_command.segment<3>(0);
       const vector_t commandLineInput(joy_command);
       
@@ -109,8 +107,6 @@ void TargetTrajectoriesJoystickPublisher::joyCallback(const sensor_msgs::msg::Jo
   command_(1) = msg->axes[0];
   command_(2) = 0.0;
   command_(3) = msg->axes[3]*90;
-  
-  std::cout << "filled in data" << std::endl;
 }
 
 Eigen::Vector4d TargetTrajectoriesJoystickPublisher::getLatestJoyCommand(){

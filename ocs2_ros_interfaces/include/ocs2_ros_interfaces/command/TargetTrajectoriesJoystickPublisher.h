@@ -32,7 +32,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <functional>
 #include <memory>
 #include <mutex>
-#include <iostream>
 #include <sensor_msgs/msg/joy.hpp>
 
 #include <rclcpp/rclcpp.hpp>
