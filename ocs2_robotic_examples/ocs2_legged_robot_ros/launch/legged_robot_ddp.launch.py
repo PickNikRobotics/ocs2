@@ -77,6 +77,12 @@ def generate_launch_description():
             prefix=["gnome-terminal --"],
         ),
         Node(
+            name='joy_node',
+            package='joy',
+            executable='joy_node',
+            output='screen',
+        ),
+        Node(
             name='legged_robot_gait_command',
             package='ocs2_legged_robot_ros',
             executable='legged_robot_gait_command',
