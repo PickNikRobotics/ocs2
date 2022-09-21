@@ -65,7 +65,7 @@ class TargetTrajectoriesJoystickPublisher final {
   /** Gets the command vector size. */
   size_t targetCommandSize() const { return targetCommandLimits_.size(); }
 
-  void publishJoystickCommand(const std::string& commadMsg = "Enter command, separated by space");
+  void publishJoystickCommand();
 
  private:
   const vector_t targetCommandLimits_;

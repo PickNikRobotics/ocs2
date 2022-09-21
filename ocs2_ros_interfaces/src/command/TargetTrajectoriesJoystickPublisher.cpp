@@ -70,7 +70,7 @@ TargetTrajectoriesJoystickPublisher::TargetTrajectoriesJoystickPublisher(::rclcp
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void TargetTrajectoriesJoystickPublisher::publishJoystickCommand(const std::string& commadMsg) {
+void TargetTrajectoriesJoystickPublisher::publishJoystickCommand() {
   while (rclcpp::ok()) {
     Eigen::Vector4d joy_command = getLatestJoyCommand().cwiseMin(targetCommandLimits_).cwiseMax(-targetCommandLimits_);
     
@@ -104,10 +104,12 @@ void TargetTrajectoriesJoystickPublisher::publishJoystickCommand(const std::stri
 void TargetTrajectoriesJoystickPublisher::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg) 
 {
   const std::lock_guard<std::mutex> lock(joymutex_);
-  command_(0) = msg->axes[1];
-  command_(1) = msg->axes[0];
+  constexpr double yaw_carrot_max = 90.0;
+  constexpr double linear_carrot_max = 1.0;
+  command_(0) = msg->axes[1]*linear_carrot_max;
+  command_(1) = msg->axes[0]*linear_carrot_max;
   command_(2) = 0.0;
-  command_(3) = msg->axes[3]*90;
+  command_(3) = msg->axes[3]*yaw_carrot_max;
 }
 
 Eigen::Vector4d TargetTrajectoriesJoystickPublisher::getLatestJoyCommand(){

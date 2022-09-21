@@ -3,6 +3,8 @@ targetRotationVelocity              0.3;
 
 comHeight                           0.575
 
+useJoystick                         false
+
 defaultJointState
 {
    (0,0)  -0.25   ; LF_HAA

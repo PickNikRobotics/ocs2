@@ -121,21 +121,20 @@ int main(int argc, char* argv[]) {
   loadData::loadEigenMatrix(referenceFile, "defaultJointState", defaultJointState);
   loadData::loadCppDataType(referenceFile, "targetRotationVelocity", targetRotationVelocity);
   loadData::loadCppDataType(referenceFile, "targetDisplacementVelocity", targetDisplacementVelocity);
+  bool  use_joystick = false;
+  loadData::loadCppDataType(referenceFile, "useJoystick", use_joystick);
 
   // goalPose: [deltaX, deltaY, deltaZ, deltaYaw]
   const scalar_array_t relativeBaseLimit{10.0, 10.0, 0.2, 360.0};
 
-  const std::string commandMsg = "Enter XYZ and Yaw (deg) displacements for the TORSO, separated by spaces";
-  
-  bool use_joystick;
-  nodeHandle->get_parameter("use_joystick", use_joystick);
   if(use_joystick) 
   {
-    TargetTrajectoriesJoystickPublisher targetJoyPoseCommand(nodeHandle, robotName, relativeBaseLimit, &commandLineToTargetTrajectories);
-    targetJoyPoseCommand.publishJoystickCommand(commandMsg);
+    TargetTrajectoriesJoystickPublisher targetJoyPoseCommand(nodeHandle, robotName, relativeBaseLimit,&commandLineToTargetTrajectories);
+    targetJoyPoseCommand.publishJoystickCommand();
   }
   else
   {
+    const std::string commandMsg = "Enter XYZ and Yaw (deg) displacements for the TORSO, separated by spaces";
     TargetTrajectoriesKeyboardPublisher targetKeyPoseCommand(nodeHandle, robotName, relativeBaseLimit, &commandLineToTargetTrajectories);
     targetKeyPoseCommand.publishKeyboardCommand(commandMsg);
   }

@@ -27,7 +27,6 @@ def generate_launch_description():
     robot_name = "legged_robot"
     config_name = "mpc"
     use_sim_time = False
-    use_joystick = True
 
     urdf_content = ""
     with open(urdf_file, 'r') as fp:
@@ -73,7 +72,6 @@ def generate_launch_description():
             parameters=[
                 {"use_sim_time": use_sim_time},
                 {"reference_file": reference_file},
-                {"use_joystick": use_joystick},
                 ],
             output='screen',
             prefix=["gnome-terminal --"],
