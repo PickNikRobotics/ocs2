@@ -124,10 +124,21 @@ int main(int argc, char* argv[]) {
 
   // goalPose: [deltaX, deltaY, deltaZ, deltaYaw]
   const scalar_array_t relativeBaseLimit{10.0, 10.0, 0.2, 360.0};
-  TargetTrajectoriesJoystickPublisher targetPoseCommand(nodeHandle, robotName, relativeBaseLimit, &commandLineToTargetTrajectories);
 
   const std::string commandMsg = "Enter XYZ and Yaw (deg) displacements for the TORSO, separated by spaces";
-  targetPoseCommand.publishJoystickCommand(commandMsg);
+  
+  bool use_joystick;
+  nodeHandle->get_parameter("use_joystick", use_joystick);
+  if(use_joystick) 
+  {
+    TargetTrajectoriesJoystickPublisher targetJoyPoseCommand(nodeHandle, robotName, relativeBaseLimit, &commandLineToTargetTrajectories);
+    targetJoyPoseCommand.publishJoystickCommand(commandMsg);
+  }
+  else
+  {
+    TargetTrajectoriesKeyboardPublisher targetKeyPoseCommand(nodeHandle, robotName, relativeBaseLimit, &commandLineToTargetTrajectories);
+    targetKeyPoseCommand.publishKeyboardCommand(commandMsg);
+  }
 
   // Successful exit
   return 0;

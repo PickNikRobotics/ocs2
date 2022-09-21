@@ -86,13 +86,14 @@ void TargetTrajectoriesJoystickPublisher::publishJoystickCommand(const std::stri
 
       // Rotate joystick command to world frame since that's what ocs2 expects
       Eigen::Quaterniond curr_rot = Eigen::AngleAxisd(observation.state[9],Eigen::Vector3d::UnitZ())
-                                * Eigen::AngleAxisd(observation.state[10],Eigen::Vector3d::UnitY())
-                                * Eigen::AngleAxisd(observation.state[11],Eigen::Vector3d::UnitX());
+                                * Eigen::AngleAxisd(0.0,Eigen::Vector3d::UnitY())
+                                * Eigen::AngleAxisd(0.0,Eigen::Vector3d::UnitX());
       joy_command.segment<3>(0) = curr_rot.matrix()*joy_command.segment<3>(0);
-      const vector_t commandLineInput(joy_command);
+      
+      const vector_t joystickInput(joy_command);
       
       // get TargetTrajectories
-      const auto targetTrajectories = commandLineToTargetTrajectoriesFun_(commandLineInput, observation);
+      const auto targetTrajectories = commandLineToTargetTrajectoriesFun_(joystickInput, observation);
 
       // publish TargetTrajectories
       targetTrajectoriesPublisherPtr_->publishTargetTrajectories(targetTrajectories);
