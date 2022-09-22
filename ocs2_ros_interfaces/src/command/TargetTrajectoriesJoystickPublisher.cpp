@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/Display.h>
 #include <ocs2_msgs/msg/mpc_observation.hpp>
 #include <ocs2_ros_interfaces/common/RosMsgConversions.h>
+#include <algorithm>
 #include <condition_variable>
 #include <thread>
 #include <chrono>
@@ -108,7 +109,14 @@ void TargetTrajectoriesJoystickPublisher::joyCallback(const sensor_msgs::msg::Jo
   constexpr double linear_carrot_max = 1.0;
   command_(0) = msg->axes[1]*linear_carrot_max;
   command_(1) = msg->axes[0]*linear_carrot_max;
-  command_(2) = 0.0;
+
+  // Paddle buttons adjust height offset command, subject to limits.
+  constexpr double height_carrot_rate = 0.1;
+  constexpr double height_carrot_min = -0.25;
+  constexpr double height_carrot_max = 0.25;
+  command_(2) = command_(2) + (msg->buttons[5] - msg->buttons[4]) * height_carrot_rate;
+  command_(2) = std::max(std::min(command_(2), height_carrot_max), height_carrot_min);
+
   command_(3) = msg->axes[3]*yaw_carrot_max;
 }
 
