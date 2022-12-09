@@ -46,6 +46,7 @@ set(AMENT_PACKAGE_DEPENDENCIES
   tf2
   tf2_ros
   urdf
+  urdfdom
   kdl_parser
   rclcpp
   robot_state_publisher
@@ -307,6 +308,7 @@ ament_export_dependencies(ocs2_centroidal_model)
 ament_export_dependencies(ocs2_ros_interfaces)
 ament_export_dependencies(tf2)
 ament_export_dependencies(urdf)
+ament_export_dependencies(urdfdom)
 ament_export_dependencies(kdl_parser)
 ament_export_dependencies(robot_state_publisher)
 ament_export_dependencies(visualization_msgs)

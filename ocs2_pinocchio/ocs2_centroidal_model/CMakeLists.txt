@@ -15,7 +15,8 @@ find_package(ocs2_core REQUIRED)
 find_package(ocs2_robotic_tools REQUIRED)
 find_package(ocs2_pinocchio_interface REQUIRED)
 find_package(OpenMP REQUIRED)
-
+find_package(urdf)
+find_package(urdfdom)
 find_package(Boost REQUIRED COMPONENTS
   system
   filesystem
@@ -66,6 +67,8 @@ ament_target_dependencies(${PROJECT_NAME}
   ocs2_pinocchio_interface
   ocs2_core
   ocs2_robotic_tools
+  urdf
+  urdfdom
 )
 
 set_target_properties(${PROJECT_NAME}
@@ -111,6 +114,8 @@ ament_export_dependencies(ocs2_core)
 ament_export_dependencies(ocs2_robotic_tools)
 ament_export_dependencies(ocs2_thirdparty)
 ament_export_dependencies(ocs2_pinocchio_interface)
+ament_export_dependencies(urdf)
+ament_export_dependencies(urdfdom)
 
 #############
 ## Testing ##
