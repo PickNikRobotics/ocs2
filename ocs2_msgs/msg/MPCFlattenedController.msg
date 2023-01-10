@@ -19,3 +19,5 @@ ModeSchedule            mode_schedule            # optimal/predefined MPC mode s
 ControllerData[]        data                     # the actual payload from flatten method: one vector of data per time step
 
 MPCPerformanceIndices   performance_indices      # solver performance indices
+
+string[]                joint_names              # joint name list

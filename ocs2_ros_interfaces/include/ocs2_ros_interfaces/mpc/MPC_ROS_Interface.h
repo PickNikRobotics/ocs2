@@ -70,6 +70,7 @@ class MPC_ROS_Interface {
    * @param [in] topicPrefix: The robot's name.
    */
   explicit MPC_ROS_Interface(MPC_BASE& mpc, std::string topicPrefix = "anonymousRobot");
+  explicit MPC_ROS_Interface(MPC_BASE& mpc, const std::vector<std::string>& joint_names, std::string topicPrefix = "anonymousRobot");
 
   /**
    * Destructor.
@@ -114,7 +115,7 @@ class MPC_ROS_Interface {
    * @return MPC policy message.
    */
   static ocs2_msgs::msg::MPCFlattenedController createMpcPolicyMsg(const PrimalSolution& primalSolution, const CommandData& commandData,
-                                                                const PerformanceIndex& performanceIndices);
+                                                                const PerformanceIndex& performanceIndices, const std::vector<std::string>& joint_names);
 
   /**
    * Handles ROS publishing thread.
@@ -173,6 +174,8 @@ class MPC_ROS_Interface {
   // MPC reset
   std::mutex resetMutex_;
   std::atomic_bool resetRequestedEver_{false};
+
+  std::vector<std::string> joint_names_;
 };
 
 }  // namespace ocs2

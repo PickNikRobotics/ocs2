@@ -47,6 +47,26 @@ MPC_ROS_Interface::MPC_ROS_Interface(MPC_BASE& mpc, std::string topicPrefix)
       publisherCommandPtr_(new CommandData()),
       bufferPerformanceIndicesPtr_(new PerformanceIndex),
       publisherPerformanceIndicesPtr_(new PerformanceIndex) {
+  joint_names_.clear();
+  // start thread for publishing
+#ifdef PUBLISH_THREAD
+  publisherWorker_ = std::thread(&MPC_ROS_Interface::publisherWorker, this);
+#endif
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+MPC_ROS_Interface::MPC_ROS_Interface(MPC_BASE& mpc, const std::vector<std::string>& joint_names, std::string topicPrefix)
+    : mpc_(mpc),
+      topicPrefix_(std::move(topicPrefix)),
+      bufferPrimalSolutionPtr_(new PrimalSolution()),
+      publisherPrimalSolutionPtr_(new PrimalSolution()),
+      bufferCommandPtr_(new CommandData()),
+      publisherCommandPtr_(new CommandData()),
+      bufferPerformanceIndicesPtr_(new PerformanceIndex),
+      publisherPerformanceIndicesPtr_(new PerformanceIndex),
+      joint_names_(joint_names) {
   // start thread for publishing
 #ifdef PUBLISH_THREAD
   publisherWorker_ = std::thread(&MPC_ROS_Interface::publisherWorker, this);
@@ -101,7 +121,8 @@ bool MPC_ROS_Interface::resetMpcCallback(const std::shared_ptr<ocs2_msgs::srv::R
 /******************************************************************************************************/
 ocs2_msgs::msg::MPCFlattenedController MPC_ROS_Interface::createMpcPolicyMsg(const PrimalSolution& primalSolution,
                                                                           const CommandData& commandData,
-                                                                          const PerformanceIndex& performanceIndices) {
+                                                                          const PerformanceIndex& performanceIndices,
+                                                                          const std::vector<std::string>& joint_names) {
   ocs2_msgs::msg::MPCFlattenedController mpcPolicyMsg;
 
   mpcPolicyMsg.init_observation = ros_msg_conversions::createObservationMsg(commandData.mpcInitObservation_);
@@ -132,6 +153,16 @@ ocs2_msgs::msg::MPCFlattenedController MPC_ROS_Interface::createMpcPolicyMsg(con
   mpcPolicyMsg.data.reserve(N);
   mpcPolicyMsg.post_event_indices.clear();
   mpcPolicyMsg.post_event_indices.reserve(primalSolution.postEventIndices_.size());
+  mpcPolicyMsg.joint_names.clear();
+  mpcPolicyMsg.joint_names.reserve(joint_names.size());
+
+  // push back
+  if(joint_names.size()){
+    for(const std::string& jname : joint_names){
+      mpcPolicyMsg.joint_names.emplace_back(jname);
+    }
+  }
+
 
   // time
   for (auto t : primalSolution.timeTrajectory_) {
@@ -201,7 +232,7 @@ void MPC_ROS_Interface::publisherWorker() {
     }
 
     ocs2_msgs::msg::MPCFlattenedController mpcPolicyMsg =
-        createMpcPolicyMsg(*publisherPrimalSolutionPtr_, *publisherCommandPtr_, *publisherPerformanceIndicesPtr_);
+        createMpcPolicyMsg(*publisherPrimalSolutionPtr_, *publisherCommandPtr_, *publisherPerformanceIndicesPtr_,joint_names_);
 
     // publish the message
     mpcPolicyPublisher_->publish(mpcPolicyMsg);
@@ -287,7 +318,7 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::msg::MPCObservat
 
 #else
   ocs2_msgs::msg::MPCFlattenedController mpcPolicyMsg =
-      createMpcPolicyMsg(*bufferPrimalSolutionPtr_, *bufferCommandPtr_, *bufferPerformanceIndicesPtr_);
+      createMpcPolicyMsg(*bufferPrimalSolutionPtr_, *bufferCommandPtr_, *bufferPerformanceIndicesPtr_,joint_names_);
   mpcPolicyPublisher_->publish(mpcPolicyMsg);
 #endif
 }
