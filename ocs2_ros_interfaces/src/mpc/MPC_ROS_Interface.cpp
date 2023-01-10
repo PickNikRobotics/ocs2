@@ -47,7 +47,7 @@ MPC_ROS_Interface::MPC_ROS_Interface(MPC_BASE& mpc, std::string topicPrefix)
       publisherCommandPtr_(new CommandData()),
       bufferPerformanceIndicesPtr_(new PerformanceIndex),
       publisherPerformanceIndicesPtr_(new PerformanceIndex) {
-  joint_names_.clear();
+  jointNames_.clear();
   // start thread for publishing
 #ifdef PUBLISH_THREAD
   publisherWorker_ = std::thread(&MPC_ROS_Interface::publisherWorker, this);
@@ -66,7 +66,7 @@ MPC_ROS_Interface::MPC_ROS_Interface(MPC_BASE& mpc, const std::vector<std::strin
       publisherCommandPtr_(new CommandData()),
       bufferPerformanceIndicesPtr_(new PerformanceIndex),
       publisherPerformanceIndicesPtr_(new PerformanceIndex),
-      joint_names_(joint_names) {
+      jointNames_(joint_names) {
   // start thread for publishing
 #ifdef PUBLISH_THREAD
   publisherWorker_ = std::thread(&MPC_ROS_Interface::publisherWorker, this);
@@ -157,10 +157,8 @@ ocs2_msgs::msg::MPCFlattenedController MPC_ROS_Interface::createMpcPolicyMsg(con
   mpcPolicyMsg.joint_names.reserve(joint_names.size());
 
   // push back
-  if(joint_names.size()){
-    for(const std::string& jname : joint_names){
-      mpcPolicyMsg.joint_names.emplace_back(jname);
-    }
+  if(!joint_names.empty()){
+    mpcPolicyMsg.joint_names = joint_names;
   }
 
 
@@ -232,7 +230,7 @@ void MPC_ROS_Interface::publisherWorker() {
     }
 
     ocs2_msgs::msg::MPCFlattenedController mpcPolicyMsg =
-        createMpcPolicyMsg(*publisherPrimalSolutionPtr_, *publisherCommandPtr_, *publisherPerformanceIndicesPtr_,joint_names_);
+        createMpcPolicyMsg(*publisherPrimalSolutionPtr_, *publisherCommandPtr_, *publisherPerformanceIndicesPtr_,jointNames_);
 
     // publish the message
     mpcPolicyPublisher_->publish(mpcPolicyMsg);
@@ -318,7 +316,7 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::msg::MPCObservat
 
 #else
   ocs2_msgs::msg::MPCFlattenedController mpcPolicyMsg =
-      createMpcPolicyMsg(*bufferPrimalSolutionPtr_, *bufferCommandPtr_, *bufferPerformanceIndicesPtr_,joint_names_);
+      createMpcPolicyMsg(*bufferPrimalSolutionPtr_, *bufferCommandPtr_, *bufferPerformanceIndicesPtr_,jointNames_);
   mpcPolicyPublisher_->publish(mpcPolicyMsg);
 #endif
 }

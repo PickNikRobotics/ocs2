@@ -175,7 +175,7 @@ class MPC_ROS_Interface {
   std::mutex resetMutex_;
   std::atomic_bool resetRequestedEver_{false};
 
-  std::vector<std::string> joint_names_;
+  std::vector<std::string> jointNames_;
 };
 
 }  // namespace ocs2
