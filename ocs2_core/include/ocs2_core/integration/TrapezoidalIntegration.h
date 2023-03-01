@@ -40,7 +40,7 @@ SCALAR_T trapezoidalIntegration(const std::vector<SCALAR_T>& timeTrajectory, con
   }
 
   SCALAR_T areaUnderCurve = 0.0;
-  for (size_t k = 1; k < timeTrajectory.size(); k++) {
+  for (std::size_t k = 1; k < timeTrajectory.size(); k++) {
     areaUnderCurve += 0.5 * (valueTrajectory[k] + valueTrajectory[k - 1]) * (timeTrajectory[k] - timeTrajectory[k - 1]);
   }  // end of k loop
 

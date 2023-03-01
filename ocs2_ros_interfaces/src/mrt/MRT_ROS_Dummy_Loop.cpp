@@ -52,7 +52,7 @@ MRT_ROS_Dummy_Loop::MRT_ROS_Dummy_Loop(MRT_ROS_Interface& mrt, scalar_t mrtDesir
 /******************************************************************************************************/
 void MRT_ROS_Dummy_Loop::run(const SystemObservation& initObservation, const TargetTrajectories& initTargetTrajectories) {
   RCLCPP_INFO_STREAM(LOGGER, "Waiting for the initial policy ...");
-  const scalar_t timeStep = (1.0 / mrtDesiredFrequency_);
+  const double timeStep = (1.0 / mrtDesiredFrequency_);
   // Reset MPC node
   mrt_.resetMpcNode(initTargetTrajectories);
 
@@ -61,8 +61,7 @@ void MRT_ROS_Dummy_Loop::run(const SystemObservation& initObservation, const Tar
     mrt_.spinMRT();
     mrt_.setCurrentObservation(initObservation);
 
-    int16_t sleeptime = rclcpp::Duration(timeStep).nanoseconds();
-    rclcpp::sleep_for(std::chrono::nanoseconds(sleeptime));
+    rclcpp::sleep_for(std::chrono::nanoseconds(int(timeStep * 1e9)));
   }
   RCLCPP_INFO_STREAM(LOGGER, "Initial policy has been received.");
 

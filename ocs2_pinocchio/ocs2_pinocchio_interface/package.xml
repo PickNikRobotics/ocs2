@@ -15,6 +15,8 @@
   <depend>ocs2_core</depend>
   <depend>ocs2_oc</depend>
   <depend>ocs2_robotic_tools</depend>
+  <depend>urdf</depend>
+  <depend>urdfdom</depend>
   <depend>pinocchio</depend>
 
   <export>

@@ -163,8 +163,7 @@ void LeggedRobotVisualizer::publishTrajectory(const std::vector<SystemObservatio
     scalar_t frameDuration = speed * (system_observation_array[k + 1].time - system_observation_array[k].time);
     scalar_t publishDuration = timedExecutionInSeconds([&]() { publishObservation(nodeHandle_->now(), system_observation_array[k]); });
     if (frameDuration > publishDuration) {
-      rclcpp::Duration dur(frameDuration - publishDuration);
-      rclcpp::sleep_for(std::chrono::nanoseconds(dur.nanoseconds()));
+      rclcpp::sleep_for(std::chrono::nanoseconds(int((frameDuration - publishDuration)*1e9)));
     }
   }
 }

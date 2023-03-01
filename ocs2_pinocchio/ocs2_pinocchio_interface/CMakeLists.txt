@@ -21,6 +21,8 @@ find_package(ocs2_robotic_tools REQUIRED)
 find_package(ocs2_oc REQUIRED)
 find_package(ocs2_thirdparty REQUIRED)
 find_package(OpenMP REQUIRED)
+find_package(urdf REQUIRED)
+find_package(urdfdom REQUIRED)
 
 find_package(Boost REQUIRED COMPONENTS
   system
@@ -77,6 +79,8 @@ ament_target_dependencies(${PROJECT_NAME}
   ocs2_core
   ocs2_oc
   ocs2_robotic_tools
+  urdf
+  urdfdom
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -127,6 +131,8 @@ ament_export_targets(
 
 ament_export_dependencies(ocs2_core)
 ament_export_dependencies(ocs2_robotic_tools)
+ament_export_dependencies(urdf)
+ament_export_dependencies(urdfdom)
 
 ############
 # Testing ##
