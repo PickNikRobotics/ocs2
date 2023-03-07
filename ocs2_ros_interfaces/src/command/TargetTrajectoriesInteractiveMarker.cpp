@@ -58,7 +58,7 @@ TargetTrajectoriesInteractiveMarker::TargetTrajectoriesInteractiveMarker(::rclcp
 
   // add the interactive marker to our collection &
   // tell the server to call processFeedback() when feedback arrives for it
-  server_.insert(interactiveMarker);  //, boost::bind(&TargetTrajectoriesInteractiveMarker::processFeedback, this, _1));
+  server_.insert(interactiveMarker, std::bind(&TargetTrajectoriesInteractiveMarker::processFeedback, this, std::placeholders::_1));
   menuHandler_.apply(server_, interactiveMarker.name);
 
   // 'commit' changes and send to all clients

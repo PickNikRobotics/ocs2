@@ -8,6 +8,8 @@ set(AMENT_DEPENDENCIES
   ocs2_core
   ocs2_robotic_tools
   ocs2_pinocchio_interface
+  pinocchio
+  hpp-fcl
 )
 
 find_package(ament_cmake REQUIRED)
@@ -23,12 +25,6 @@ find_package(Boost REQUIRED COMPONENTS
   log_setup
 )
 
-if ( EXISTS "/opt/openrobots/lib/libpinocchio.so")
-else()
-    message(FATAL_ERROR "Install Pinocchio first. Instructions: https://stack-of-tasks.github.io/pinocchio/download.html")
-endif()
-
-list(APPEND CMAKE_PREFIX_PATH "/opt/openrobots/")
 find_package(pinocchio REQUIRED)
 find_package(hpp-fcl  REQUIRED)
 
@@ -48,14 +44,6 @@ set(FLAGS
   -DPINOCCHIO_URDFDOM_USE_STD_SHARED_PTR
 )
 
-include_directories(
-  include
-  ${EIGEN3_INCLUDE_DIRS}
-  ${pinocchio_INCLUDE_DIRS}
-  ${hpp-fcl_INCLUDE_DIRS}
-)
-
-
 # ocs2 pinocchio interface library
 add_library(${PROJECT_NAME}
   src/PinocchioGeometryInterface.cpp
@@ -65,11 +53,17 @@ add_library(${PROJECT_NAME}
   src/SelfCollisionConstraintCppAd.cpp
 )
 
+target_include_directories(${PROJECT_NAME}
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+  ${EIGEN3_INCLUDE_DIRS}
+  ${pinocchio_INCLUDE_DIRS}
+  ${hpp-fcl_INCLUDE_DIRS})
+
+
 ament_target_dependencies(${PROJECT_NAME}
   ${AMENT_DEPENDENCIES}
-)
-target_link_libraries(${PROJECT_NAME}
-  ${pinocchio_LIBRARIES}
 )
 target_compile_options(${PROJECT_NAME} PUBLIC ${FLAGS})
 
@@ -93,6 +87,7 @@ endif (cmake_clang_tools_FOUND)
 #############
 
 install(TARGETS ${PROJECT_NAME}
+  EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
@@ -110,7 +105,7 @@ ament_export_targets(
 ament_export_dependencies(ocs2_core)
 ament_export_dependencies(ocs2_robotic_tools)
 ament_export_dependencies(ocs2_pinocchio_interface)
+ament_export_dependencies(pinocchio)
+ament_export_dependencies(hpp-fcl)
 
-############
-# Testing ##
-############
+ament_package()

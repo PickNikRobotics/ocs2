@@ -29,12 +29,6 @@ find_package(Boost REQUIRED COMPONENTS
   log_setup
 )
 
-if ( EXISTS "/opt/openrobots/lib/libpinocchio.so")
-else()
-    message(FATAL_ERROR "Install Pinocchio first. Instructions: https://stack-of-tasks.github.io/pinocchio/download.html")
-endif()
-
-list(APPEND CMAKE_PREFIX_PATH "/opt/openrobots/")
 find_package(pinocchio REQUIRED)
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
@@ -67,7 +61,6 @@ add_library(${PROJECT_NAME}
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC
-  /opt/openrobots/include
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
 )
@@ -84,9 +77,6 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_PINOCCHIO_FLAGS})
-
-set_target_properties(${PROJECT_NAME}
-  PROPERTIES INSTALL_RPATH "/opt/openrobots/lib")
 
 
 ####################
@@ -127,6 +117,7 @@ ament_export_targets(
 
 ament_export_dependencies(ocs2_core)
 ament_export_dependencies(ocs2_robotic_tools)
+ament_export_dependencies(pinocchio)
 
 ############
 # Testing ##
